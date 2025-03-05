@@ -29,12 +29,16 @@ class Canvas : public Widget
         kRect = 2,
         kEllipse = 3,
         kPolygon = 4,
+        kFreehand = 5,
     };
 
     // Shape type setters.
     void set_default();
     void set_line();
     void set_rect();
+    void set_ellipse();
+    void set_polygon();
+    void set_freehand();
     // HW1_TODO: more shape types.
 
     // Clears all shapes from the canvas.
@@ -45,6 +49,8 @@ class Canvas : public Widget
 
     // Controls the visibility of the canvas background.
     void show_background(bool flag);
+
+    void mouse_right_click_event(); 
 
    private:
     // Drawing functions.
@@ -72,6 +78,9 @@ class Canvas : public Widget
 
     // Mouse interaction status.
     bool is_hovered_, is_active_;
+    bool is_polygon_drawing_ = false;  
+    private:
+    bool is_freehand_drawing_ = false; 
 
     // Current shape being drawn.
     ShapeType shape_type_;

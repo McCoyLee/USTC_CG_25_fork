@@ -6,6 +6,9 @@
 #include "imgui.h"
 #include "shapes/line.h"
 #include "shapes/rect.h"
+#include "shapes/ellipse.h"
+#include "shapes/polygon.h"
+#include "shapes/freehand.h"
 
 namespace USTC_CG
 {
@@ -15,6 +18,9 @@ void Canvas::draw()
     // HW1_TODO: more interaction events
     if (is_hovered_ && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
         mouse_click_event();
+    if (is_hovered_ && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+        mouse_right_click_event();
+    }
     mouse_move_event();
     if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
         mouse_release_event();
@@ -54,6 +60,24 @@ void Canvas::set_rect()
     shape_type_ = kRect;
 }
 
+void Canvas::set_ellipse()
+{
+    draw_status_ = false;
+    shape_type_ = kEllipse;
+}
+
+void Canvas::set_polygon()
+{
+    draw_status_ = false;
+    shape_type_ = kPolygon;
+    is_polygon_drawing_ = false;
+}
+
+void Canvas::set_freehand(){
+    draw_status_ = false;
+    shape_type_ = kFreehand;
+    is_freehand_drawing_ = false;
+}
 // HW1_TODO: more shape types, implements
 
 void Canvas::clear_shape_list()
@@ -85,7 +109,6 @@ void Canvas::draw_shapes()
     Shape::Config s = { .bias = { canvas_min_.x, canvas_min_.y } };
     ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
-    // ClipRect can hide the drawing content outside of the rectangular area
     draw_list->PushClipRect(canvas_min_, canvas_max_, true);
     for (const auto& shape : shape_list_)
     {
@@ -98,62 +121,98 @@ void Canvas::draw_shapes()
     draw_list->PopClipRect();
 }
 
-void Canvas::mouse_click_event()
-{
-    // HW1_TODO: Drawing rule for more primitives
-    if (!draw_status_)
-    {
-        draw_status_ = true;
-        start_point_ = end_point_ = mouse_pos_in_canvas();
-        switch (shape_type_)
-        {
-            case USTC_CG::Canvas::kDefault:
-            {
-                break;
+void Canvas::mouse_click_event() {
+    if (shape_type_ == kFreehand) {
+        if (!is_freehand_drawing_) {
+            is_freehand_drawing_ = true;
+            draw_status_ = true;
+            start_point_ = end_point_ = mouse_pos_in_canvas();
+            current_shape_ = std::make_shared<Freehand>();
+            auto freehand = std::dynamic_pointer_cast<Freehand>(current_shape_);
+            if (freehand) {
+                freehand->add_point(start_point_.x, start_point_.y);  // 添加第一个点
+                std::cout << "Started Freehand drawing." << std::endl;
             }
-            case USTC_CG::Canvas::kLine:
-            {
-                current_shape_ = std::make_shared<Line>(
-                    start_point_.x, start_point_.y, end_point_.x, end_point_.y);
-                break;
+        }
+    }   
+    else if (shape_type_ == kPolygon) {
+        if (!is_polygon_drawing_) {
+            is_polygon_drawing_ = true;
+            draw_status_ = true;
+            start_point_ = end_point_ = mouse_pos_in_canvas();  
+            current_shape_ = std::make_shared<Polygon>();
+            auto polygon = std::dynamic_pointer_cast<Polygon>(current_shape_);
+            if (polygon) {
+                polygon->add_control_point(start_point_.x, start_point_.y); 
+                std::cout << "Added initial point: (" << start_point_.x << ", " << start_point_.y << ")" << std::endl;
             }
-            case USTC_CG::Canvas::kRect:
-            {
-                current_shape_ = std::make_shared<Rect>(
-                    start_point_.x, start_point_.y, end_point_.x, end_point_.y);
-                break;
+        } else {
+            end_point_ = mouse_pos_in_canvas();
+            auto polygon = std::dynamic_pointer_cast<Polygon>(current_shape_);
+            if (polygon) {
+                polygon->add_control_point(end_point_.x, end_point_.y);
+                std::cout << "Added new point: (" << end_point_.x << ", " << end_point_.y << ")" << std::endl;
             }
-            // HW1_TODO: case USTC_CG::Canvas::kEllipse:
-            default: break;
         }
     }
-    else
-    {
-        draw_status_ = false;
-        if (current_shape_)
-        {
+    else {
+        if (!draw_status_) {
+            draw_status_ = true;
+            start_point_ = end_point_ = mouse_pos_in_canvas();
+            switch (shape_type_) {
+                case kDefault:
+                    break;
+                case kLine:
+                    current_shape_ = std::make_shared<Line>(
+                        start_point_.x, start_point_.y, end_point_.x, end_point_.y);
+                    break;
+                case kRect:
+                    current_shape_ = std::make_shared<Rect>(
+                        start_point_.x, start_point_.y, end_point_.x, end_point_.y);
+                    break;
+                case kEllipse:
+                    current_shape_ = std::make_shared<Ellipse>(
+                        start_point_.x, start_point_.y, end_point_.x, end_point_.y);
+                    break;
+                default:
+                    break;
+            }
+        } else {
+            draw_status_ = false;
+            if (current_shape_) {
+                shape_list_.push_back(current_shape_);
+                current_shape_.reset();
+            }
+        }
+    }
+}
+
+void Canvas::mouse_move_event() {
+    if (draw_status_) {
+        end_point_ = mouse_pos_in_canvas();
+        if (current_shape_) {
+            if (shape_type_ == kFreehand) {
+                auto freehand = std::dynamic_pointer_cast<Freehand>(current_shape_);
+                if (freehand) {
+                    freehand->add_point(end_point_.x, end_point_.y);  // 添加新点
+                }
+            } else {
+                current_shape_->update(end_point_.x, end_point_.y);
+            }
+        }
+    }
+}
+
+void Canvas::mouse_release_event() {
+    if (shape_type_ == kFreehand && is_freehand_drawing_) {
+        if (current_shape_) {
             shape_list_.push_back(current_shape_);
             current_shape_.reset();
         }
+        is_freehand_drawing_ = false;
+        draw_status_ = false;
+        std::cout << "Finished Freehand drawing." << std::endl;
     }
-}
-
-void Canvas::mouse_move_event()
-{
-    // HW1_TODO: Drawing rule for more primitives
-    if (draw_status_)
-    {
-        end_point_ = mouse_pos_in_canvas();
-        if (current_shape_)
-        {
-            current_shape_->update(end_point_.x, end_point_.y);
-        }
-    }
-}
-
-void Canvas::mouse_release_event()
-{
-    // HW1_TODO: Drawing rule for more primitives
 }
 
 ImVec2 Canvas::mouse_pos_in_canvas() const
@@ -163,4 +222,40 @@ ImVec2 Canvas::mouse_pos_in_canvas() const
         io.MousePos.x - canvas_min_.x, io.MousePos.y - canvas_min_.y);
     return mouse_pos_in_canvas;
 }
+
+void Canvas::mouse_right_click_event() {
+    if (shape_type_ == kFreehand && is_freehand_drawing_) {
+        // 结束 Freehand 绘制
+        if (current_shape_) {
+            shape_list_.push_back(current_shape_);
+            current_shape_.reset();
+        }
+        is_freehand_drawing_ = false;
+        draw_status_ = false;
+        std::cout << "Freehand drawing canceled." << std::endl;
+    } else if (shape_type_ == kPolygon && is_polygon_drawing_ && current_shape_) {
+        // 多边形闭合逻辑
+        auto polygon = std::dynamic_pointer_cast<Polygon>(current_shape_);
+        if (polygon) {
+            // 删除最后一个动态更新的顶点（鼠标移动时的临时点）
+            auto& x_list = polygon->get_x_list();
+            auto& y_list = polygon->get_y_list();
+            if (!x_list.empty()) {
+                x_list.pop_back();
+                y_list.pop_back();
+            }
+            // 标记多边形为闭合状态
+            polygon->close_polygon();
+            // 确保至少有3个顶点才保存
+            if (x_list.size() >= 3) {
+                shape_list_.push_back(current_shape_);
+            }
+            current_shape_.reset();
+            is_polygon_drawing_ = false;
+            draw_status_ = false;
+            std::cout << "Polygon closed." << std::endl;
+        }
+    }
+}
+
 }  // namespace USTC_CG
