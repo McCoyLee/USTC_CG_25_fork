@@ -1,45 +1,46 @@
-# 课程作业
+# 璇剧▼浣滀笟
 
-## 前置技能
+## 鍓嶇疆鎶€鑳�
 
-- 学习 GitHub 来管理和维护代码：查看 [GitHub 简易说明](../Softwares/Github.md)，学习 Git，GitHub 和 GitHub Desktop，并 **private fork** USTC_CG，以后在其上完成作业
-<!-- - 下载 Typora（[下载链接](https://www.typora.io/windows/typora-setup-x64.exe?)）以便在本地查看和编辑 markdown (\*.md) 文件 -->
-- 下载 Vistual Studio Comunity 2022，学习使用 VS 2022 来构建 C++ 项目、编译、运行、调试等
-- 下载 CMake（[下载链接](https://github.com/Kitware/CMake/releases/download/v3.28.2/cmake-3.28.2-windows-x86_64.msi)），学会如何用 CMake 搭建项目，生成 VS 解决方案，然后编译、安装、运行
-
-
-## 作业提交规范与要求
-
-### (1) 代码管理
-- 每个同学通过各自的 GitHub 进行管理和维护各自的作业代码及相关文档
-- 该 GitHub 项目作为本课程作业专用的，设为私有的，不要公开
-
-### (2) 提交系统
-- 每次作业须通过CES-Alpha系统来完成：[作业提交系统](https://cn.ces-alpha.org/course/manager/CG2025/)- 作业提交系统的使用可详细查看：[作业提交系统说明](https://rec.ustc.edu.cn/share/ffe2ccc0-bfcd-11ee-975e-e7adc994d6f4)
-
-### (3) 提交要求
-每次作业仅须提交一个压缩包(zip 或 rar 格式)，文件命名为 `ID_姓名_Homework*.rar/zip`，其中包含：
-- 代码 project 的整个文件夹：须删除一些不必要的文件，比如bin、lib、build等
-- 实验报告
-- 可选：演示视频等其他辅助说明材料
-
-## 作业布置形式
-
-每次作业在布置的时候会提供两个文件夹`(1) documents`和`(2) project`，前者为本次作业的要求说明，后者为本次作业的项目代码文件夹。
-
-### (1) 说明文档 `documents` 
-
-- 提供本次作业的要求说明和一些辅助资料
-
-### (2) 作业项目 `project`
-
-- 提供本次作业的基础代码框架，提供了部分代码，你需要完成所缺少的其他代码
-
-### (3) 参考代码 `samples`
-
-- 本次作业的参考代码，作业布置的时候不会提供，在作业批改与讲解之后再提供
+- 瀛︿範 GitHub 鏉ョ�＄悊鍜岀淮鎶や唬鐮侊細鏌ョ湅 [GitHub 绠€鏄撹�存槑](../Softwares/Github.md)锛屽�︿範 Git锛孏itHub 鍜� GitHub Desktop锛屽苟 **private fork** USTC_CG锛屼互鍚庡湪鍏朵笂瀹屾垚浣滀笟
+<!-- - 涓嬭浇 Typora锛圼涓嬭浇閾炬帴](https://www.typora.io/windows/typora-setup-x64.exe?)锛変互渚垮湪鏈�鍦版煡鐪嬪拰缂栬緫 markdown (\*.md) 鏂囦欢 -->
+- 涓嬭浇 Vistual Studio Comunity 2022锛屽�︿範浣跨敤 VS 2022 鏉ユ瀯寤� C++ 椤圭洰銆佺紪璇戙€佽繍琛屻€佽皟璇曠瓑
+- 涓嬭浇 CMake锛圼涓嬭浇閾炬帴](https://github.com/Kitware/CMake/releases/download/v3.28.2/cmake-3.28.2-windows-x86_64.msi)锛夛紝瀛︿細濡備綍鐢� CMake 鎼�寤洪」鐩�锛岀敓鎴� VS 瑙ｅ喅鏂规�堬紝鐒跺悗缂栬瘧銆佸畨瑁呫€佽繍琛�
 
 
-## 具体课程作业
+## 浣滀笟鎻愪氦瑙勮寖涓庤�佹眰
 
-0. C++ 课前热身练习 [->](./0_cpp_warmup/) 
+### (1) 浠ｇ爜绠＄悊
+- 姣忎釜鍚屽�﹂€氳繃鍚勮嚜鐨� GitHub 杩涜�岀�＄悊鍜岀淮鎶ゅ悇鑷�鐨勪綔涓氫唬鐮佸強鐩稿叧鏂囨。
+- 璇� GitHub 椤圭洰浣滀负鏈�璇剧▼浣滀笟涓撶敤鐨勶紝璁句负绉佹湁鐨勶紝涓嶈�佸叕寮€
+
+### (2) 鎻愪氦绯荤粺
+- 姣忔�′綔涓氶』閫氳繃CES-Alpha绯荤粺鏉ュ畬鎴愶細[浣滀笟鎻愪氦绯荤粺](https://cn.ces-alpha.org/course/manager/CG2025/)- 浣滀笟鎻愪氦绯荤粺鐨勪娇鐢ㄥ彲璇︾粏鏌ョ湅锛歔浣滀笟鎻愪氦绯荤粺璇存槑](https://rec.ustc.edu.cn/share/ffe2ccc0-bfcd-11ee-975e-e7adc994d6f4)
+
+### (3) 鎻愪氦瑕佹眰
+姣忔�′綔涓氫粎椤绘彁浜や竴涓�鍘嬬缉鍖�(zip 鎴� rar 鏍煎紡)锛屾枃浠跺懡鍚嶄负 `ID_濮撳悕_Homework*.rar/zip`锛屽叾涓�鍖呭惈锛�
+- 浠ｇ爜 project 鐨勬暣涓�鏂囦欢澶癸細椤诲垹闄や竴浜涗笉蹇呰�佺殑鏂囦欢锛屾瘮濡俠in銆乴ib銆乥uild绛�
+- 瀹為獙鎶ュ憡
+- 鍙�閫夛細婕旂ず瑙嗛�戠瓑鍏朵粬杈呭姪璇存槑鏉愭枡
+
+## 浣滀笟甯冪疆褰㈠紡
+
+姣忔�′綔涓氬湪甯冪疆鐨勬椂鍊欎細鎻愪緵涓や釜鏂囦欢澶筦(1) documents`鍜宍(2) project`锛屽墠鑰呬负鏈�娆′綔涓氱殑瑕佹眰璇存槑锛屽悗鑰呬负鏈�娆′綔涓氱殑椤圭洰浠ｇ爜鏂囦欢澶广€�
+
+### (1) 璇存槑鏂囨。 `documents` 
+
+- 鎻愪緵鏈�娆′綔涓氱殑瑕佹眰璇存槑鍜屼竴浜涜緟鍔╄祫鏂�
+
+### (2) 浣滀笟椤圭洰 `project`
+
+- 鎻愪緵鏈�娆′綔涓氱殑鍩虹�€浠ｇ爜妗嗘灦锛屾彁渚涗簡閮ㄥ垎浠ｇ爜锛屼綘闇€瑕佸畬鎴愭墍缂哄皯鐨勫叾浠栦唬鐮�
+
+### (3) 鍙傝€冧唬鐮� `samples`
+
+- 鏈�娆′綔涓氱殑鍙傝€冧唬鐮侊紝浣滀笟甯冪疆鐨勬椂鍊欎笉浼氭彁渚涳紝鍦ㄤ綔涓氭壒鏀逛笌璁茶В涔嬪悗鍐嶆彁渚�
+
+
+## 鍏蜂綋璇剧▼浣滀笟
+
+0. C++ 璇惧墠鐑�韬�缁冧範 [->](./0_cpp_warmup/) 
+1. MiniDraw 鐢诲浘灏忓伐鍏� [->](./1_mini_draw/)

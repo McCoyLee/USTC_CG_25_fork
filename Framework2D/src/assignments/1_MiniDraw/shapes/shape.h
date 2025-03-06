@@ -46,6 +46,6 @@ class Shape
      *
      * @param x, y Control point to be added. e.g. vertex of a polygon.
      */
-    void add_control_point(float x, float y) {}
+    virtual void add_control_point(float x, float y) {}
 };
 }  // namespace USTC_CG

@@ -33,7 +33,7 @@ git submodule update --init --recursive
 
 确保在 [third_party/](./third_party/) 目录下的所有子文件夹都不是空的。
 
-可以根据热身训练中的 CMake 配置教程配置本项目：
+可以根据[热身训练的 CMake 配置教程](../Homeworks/0_cpp_warmup/documents/CMake_step_by_step/CMAKE_step_by_step.md)配置本项目，下面写的比较简略：
 
 Step 1: 首先确保 VS Code 中安装了必要的 C++ 、CMake 扩展（C/C++, C/C++ Extension Pack, CMake Tools 等）。
 
