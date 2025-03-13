@@ -1,4 +1,7 @@
 #include "warping_widget.h"
+#include "warper/IDW_warper.h"
+#include "warper/RBF_warper.h"
+#include "warper/nn_warper.h"
 
 #include <cmath>
 #include <iostream>
@@ -154,18 +157,85 @@ void WarpingWidget::warping()
             }
             break;
         }
-        case kIDW:
-        {
-            // HW2_TODO: Implement the IDW warping
-            // use selected points start_points_, end_points_ to construct the map
-            std::cout << "IDW not implemented." << std::endl;
+        case kIDW: {
+            if (control_points_.empty()) {
+                std::cout << "No control points for IDW!" << std::endl;
+                break;
+            }
+
+            current_warper_ = std::make_unique<IDWWarper>();
+            current_warper_->setControlPoints(control_points_);
+
+            // 反向映射：遍历目标图像每个像素
+            for (int y = 0; y < warped_image.height(); ++y) {
+                for (int x = 0; x < warped_image.width(); ++x) {
+                    // 计算对应的源坐标
+                    auto [src_x, src_y] = current_warper_->warp(x, y);
+                    
+                    // 双线性插值获取颜色
+                    if (src_x >= 0 && src_x < data_->width() && 
+                        src_y >= 0 && src_y < data_->height()) 
+                    {
+                        auto color = bilinear_interpolate(src_x, src_y, *data_);
+                        warped_image.set_pixel(x, y, color);
+                    }
+                }
+            }
             break;
         }
-        case kRBF:
-        {
-            // HW2_TODO: Implement the RBF warping
-            // use selected points start_points_, end_points_ to construct the map
-            std::cout << "RBF not implemented." << std::endl;
+
+        case kRBF: {
+            if (control_points_.empty()) {
+                std::cout << "RBF变形需要至少1个控制点！" << std::endl;
+                break;
+            }
+
+            current_warper_ = std::make_unique<RBFWarper>();
+            // 传递图像尺寸用于边界约束
+            dynamic_cast<RBFWarper*>(current_warper_.get())->setImageSize(
+                data_->width(), data_->height()
+            );
+            current_warper_->setControlPoints(control_points_);
+
+            // 反向映射
+            for (int y = 0; y < warped_image.height(); ++y) {
+                for (int x = 0; x < warped_image.width(); ++x) {
+                    auto [src_x, src_y] = current_warper_->warp(x, y);
+                    if (src_x >= 0 && src_x < data_->width() && 
+                        src_y >= 0 && src_y < data_->height()) 
+                    {
+                        auto color = bilinear_interpolate(src_x, src_y, *data_);
+                        warped_image.set_pixel(x, y, color);
+                    }
+                }
+            }
+            break;
+        }
+
+        case kNeuralNetwork: {  // 新增神经网络变形选项
+            if (control_points_.empty()) {
+                std::cout << "神经网络变形需要至少1个控制点！" << std::endl;
+                break;
+            }
+
+            current_warper_ = std::make_unique<NNWarper>();
+            dynamic_cast<NNWarper*>(current_warper_.get())->setImageSize(
+                data_->width(), data_->height()
+            );
+            current_warper_->setControlPoints(control_points_);
+
+            // 反向映射
+            for (int y = 0; y < warped_image.height(); ++y) {
+                for (int x = 0; x < warped_image.width(); ++x) {
+                    auto [src_x, src_y] = current_warper_->warp(x, y);
+                    if (src_x >= 0 && src_x < data_->width() && 
+                        src_y >= 0 && src_y < data_->height()) 
+                    {
+                        auto color = bilinear_interpolate(src_x, src_y, *data_);
+                        warped_image.set_pixel(x, y, color);
+                    }
+                }
+            }
             break;
         }
         default: break;
@@ -195,12 +265,15 @@ void WarpingWidget::set_RBF()
 {
     warping_type_ = kRBF;
 }
+void WarpingWidget::set_NeuralNetwork()
+{
+    warping_type_ = kNeuralNetwork;
+}
 void WarpingWidget::enable_selecting(bool flag)
 {
     flag_enable_selecting_points_ = flag;
 }
-void WarpingWidget::select_points()
-{
+void WarpingWidget::select_points() {
     /// Invisible button over the canvas to capture mouse interactions.
     ImGui::SetCursorScreenPos(position_);
     ImGui::InvisibleButton(
@@ -209,50 +282,87 @@ void WarpingWidget::select_points()
             static_cast<float>(image_width_),
             static_cast<float>(image_height_)),
         ImGuiButtonFlags_MouseButtonLeft);
-    // Record the current status of the invisible button
+    
     bool is_hovered_ = ImGui::IsItemHovered();
-    // Selections
     ImGuiIO& io = ImGui::GetIO();
-    if (is_hovered_ && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-    {
+
+    if (is_hovered_ && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+        // 转换为图像坐标（减去画布偏移）
+        start_ = ImVec2(
+            io.MousePos.x - position_.x,
+            io.MousePos.y - position_.y
+        );
+        end_ = start_;
         draw_status_ = true;
-        start_ = end_ =
-            ImVec2(io.MousePos.x - position_.x, io.MousePos.y - position_.y);
     }
-    if (draw_status_)
-    {
-        end_ = ImVec2(io.MousePos.x - position_.x, io.MousePos.y - position_.y);
-        if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
-        {
-            start_points_.push_back(start_);
-            end_points_.push_back(end_);
+
+    if (draw_status_) {
+        end_ = ImVec2(
+            io.MousePos.x - position_.x,
+            io.MousePos.y - position_.y
+        );
+        if (!ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+            // 保存为ControlPoint（坐标范围检查）
+            if (start_.x >= 0 && start_.x < data_->width() && 
+                start_.y >= 0 && start_.y < data_->height() &&
+                end_.x >= 0 && end_.x < data_->width() && 
+                end_.y >= 0 && end_.y < data_->height()) 
+            {
+                control_points_.emplace_back(
+                    start_.x, start_.y,  // 源点
+                    end_.x, end_.y       // 目标点
+                );
+            }
             draw_status_ = false;
         }
     }
-    // Visualization
+
+    // 可视化：绘制所有控制点连线
     auto draw_list = ImGui::GetWindowDrawList();
-    for (size_t i = 0; i < start_points_.size(); ++i)
-    {
-        ImVec2 s(
-            start_points_[i].x + position_.x, start_points_[i].y + position_.y);
-        ImVec2 e(
-            end_points_[i].x + position_.x, end_points_[i].y + position_.y);
+    for (const auto& cp : control_points_) {
+        ImVec2 s(cp.src_x + position_.x, cp.src_y + position_.y);
+        ImVec2 e(cp.tar_x + position_.x, cp.tar_y + position_.y);
         draw_list->AddLine(s, e, IM_COL32(255, 0, 0, 255), 2.0f);
         draw_list->AddCircleFilled(s, 4.0f, IM_COL32(0, 0, 255, 255));
         draw_list->AddCircleFilled(e, 4.0f, IM_COL32(0, 255, 0, 255));
     }
-    if (draw_status_)
-    {
+    if (draw_status_) {
         ImVec2 s(start_.x + position_.x, start_.y + position_.y);
         ImVec2 e(end_.x + position_.x, end_.y + position_.y);
         draw_list->AddLine(s, e, IM_COL32(255, 0, 0, 255), 2.0f);
         draw_list->AddCircleFilled(s, 4.0f, IM_COL32(0, 0, 255, 255));
     }
 }
-void WarpingWidget::init_selections()
-{
-    start_points_.clear();
-    end_points_.clear();
+
+std::vector<uchar> WarpingWidget::bilinear_interpolate(float x, float y, const Image& src) {
+    // 确保坐标在图像范围内
+    x = std::clamp(x, 0.0f, static_cast<float>(src.width() - 1));
+    y = std::clamp(y, 0.0f, static_cast<float>(src.height() - 1));
+
+    int x0 = static_cast<int>(std::floor(x));
+    int y0 = static_cast<int>(std::floor(y));
+    int x1 = std::min(x0 + 1, src.width() - 1);
+    int y1 = std::min(y0 + 1, src.height() - 1);
+    float dx = x - x0;
+    float dy = y - y0;
+
+    auto c00 = src.get_pixel(x0, y0);
+    auto c01 = src.get_pixel(x0, y1);
+    auto c10 = src.get_pixel(x1, y0);
+    auto c11 = src.get_pixel(x1, y1);
+
+    std::vector<uchar> color(3);
+    for (int i = 0; i < 3; ++i) {
+        float val = (1 - dx) * (1 - dy) * c00[i] +
+                    (1 - dx) * dy * c01[i] +
+                    dx * (1 - dy) * c10[i] +
+                    dx * dy * c11[i];
+        color[i] = static_cast<uchar>(std::clamp(val, 0.0f, 255.0f));
+    }
+    return color;
+}
+void WarpingWidget::init_selections() {
+    control_points_.clear();  // 清空控制点（替换旧逻辑）
 }
 
 std::pair<int, int>
