@@ -24,7 +24,7 @@ $$R(\boldsymbol{p})=\sum _ {i=1}^n \boldsymbol{\alpha} _ i g_i(\Vert\boldsymbol{
 
 这里的径向基函数也有较大的选取自由，可以取
 
-$$g_i(d) = (d^2 + r_i^2)^{\mu/2}, \quad r_i = \min_{j\neq i} \Vert\boldsymbol{p_i} - \boldsymbol{p_j}\Vert.$$
+$$g_i(d) = (d^2 + r_i^2)^{\pm 1/2}, \quad r_i = \min_{j\neq i} \Vert\boldsymbol{p_i} - \boldsymbol{p_j}\Vert.$$
 
 上述映射 $f$ 有 $2(n+3)$ 个自由度（矩阵 $\boldsymbol{A}$，向量 $\boldsymbol{b}$，以及 $n$ 个二维向量 $\boldsymbol{\alpha} _ i$），插值条件
 

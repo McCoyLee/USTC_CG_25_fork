@@ -42,5 +42,12 @@
 
 ## 鍏蜂綋璇剧▼浣滀笟
 
+<<<<<<< HEAD
 0. C++ 璇惧墠鐑�韬�缁冧範 [->](./0_cpp_warmup/) 
 1. MiniDraw 鐢诲浘灏忓伐鍏� [->](./1_mini_draw/)
+=======
+0. C++ 课前热身练习 [->](./0_cpp_warmup/) 
+1. MiniDraw 画图小工具 [->](./1_mini_draw/)
+2. ImageWarping 图像变形 [->](./2_image_warping/)
+3. PoissonImageEditing 图像融合 [->](./3_poisson_image_editing/)
+>>>>>>> upstream

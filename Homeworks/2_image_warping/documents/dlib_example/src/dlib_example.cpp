@@ -3,122 +3,111 @@
 #include <vector>
 #include <dlib/statistics.h>
 
-using namespace std;
-using namespace dlib;
+#include <string>
 
 int main()
 {
-    try {
-        // 1. Network architecture
-        using net_type = loss_mean_squared_multioutput<
-                               fc<2,
-                               relu<fc<100,
-                               relu<fc<50,
-                               input<matrix<double>>
-                               >>>>>>;
+  std::vector<dlib::matrix<double>> src_vec_input, src_vec;
+  std::vector<dlib::matrix<float>> dst_vec_input, dst_vec;
+  dlib::matrix<float> output_means, output_stds;
+  std::string data_path = "../data/training_set.txt";
+  // Load training data from "data/training_set.txt"
+  std::ifstream file(data_path);
+  if (!file.is_open()) {
+    std::cerr << "Error: Could not open file " << data_path << std::endl;
+    return 1;
+  }
+  std::string line;
+  while (std::getline(file, line)) {
+    std::istringstream iss(line);
+    dlib::matrix<double> src(2, 1);
+    dlib::matrix<float> dst(2, 1);
+    iss >> src(0) >> src(1) >> dst(0) >> dst(1);
+    src_vec_input.push_back(src);
+    dst_vec_input.push_back(dst);
+    src_vec.push_back(src);
+    dst_vec.push_back(dst);
+  }
+  file.close();
+  
+  // ========================== Data Processing (Normalization) ==========================
+  dlib::vector_normalizer<dlib::matrix<double>> input_normalizer;
+  dlib::vector_normalizer<dlib::matrix<float>> output_normalizer;
+  input_normalizer.train(src_vec);
+  for (auto& x : src_vec) x = input_normalizer(x);
+  output_normalizer.train(dst_vec);
+  output_means = output_normalizer.means();
+  output_stds = output_normalizer.std_devs();
+  for (auto& x : dst_vec) x = output_normalizer(x);
+  // Print the data status: number, mean, and standard deviation
+  std::cout << "Number of samples: " << src_vec.size() << std::endl;
+  std::cout << "Output means: " << output_means << std::endl;
+  std::cout << "Output stds: " << output_stds << std::endl;
 
-        // 2. Generate synthetic data
-        const int num_samples = 500;
-        dlib::rand rnd;
-        std::vector<matrix<double>> inputs;
-        std::vector<matrix<float>> outputs;
 
-        for (int i = 0; i < num_samples; ++i) {
-            matrix<double> input(2,1);
-            input(0,0) = rnd.get_random_double()*4 - 2;
-            input(1,0) = rnd.get_random_double()*4 - 2;
-            
-            matrix<float> output(2,1);
-            output(0,0) = sin(input(0)) + 0.5*cos(input(1)) + 0.01*rnd.get_random_gaussian();
-            output(1,0) = 0.5*input(0)*input(1) + 0.2*rnd.get_random_gaussian();
-            
-            inputs.push_back(input);
-            outputs.push_back(output);
-        }
+  // ========================== Network architecture ==========================
+  using network_type = dlib::loss_mean_squared_multioutput< // Loss function: mean squared error
+    dlib::fc<2, // Full connection layer with 2 output neurons
+    dlib::relu<dlib::fc<64, // Full connection layer with 64 neurons, followed by ReLU activation
+    dlib::relu<dlib::fc<64, // Full connection layer with 64 neurons, followed by ReLU activation
+    dlib::input<dlib::matrix<double>> // Input layer
+    >>>>>>;
+  // ========================== Train the network ==========================
+  // Select the solver (e.g. ADAM, SGD)
+  // 0.002 - weight_decay (Similar to L2 regularization adding to loss. Reduce overfitting)
+  // 0.9, 0.999 - beta1, beta2 (ADAM hyperparameters)
+  dlib::adam solver(0.002, 0.9, 0.999);
+  // Initialize the trainer
+  network_type net;
+  dlib::dnn_trainer<network_type, dlib::adam> trainer(net, solver);
+  // Training parameters
+  trainer.set_learning_rate(0.001);
+  trainer.set_min_learning_rate(1e-6);
+  trainer.set_mini_batch_size(128);
+  trainer.set_learning_rate_shrink_factor(0.1);
+  trainer.set_iterations_without_progress_threshold(500);
+  trainer.be_verbose();
+  std::cout << "Starting training..." << std::endl;
+  trainer.train(src_vec, dst_vec);
 
-        // 3. Split dataset
-        auto train_inputs = std::vector<matrix<double>>(inputs.begin(), inputs.begin()+400);
-        auto train_outputs = std::vector<matrix<float>>(outputs.begin(), outputs.begin()+400);
-        auto test_inputs = std::vector<matrix<double>>(inputs.begin()+400, inputs.end());
-        auto test_outputs = std::vector<matrix<float>>(outputs.begin()+400, outputs.end());
 
-        // 4. Data normalization
-        vector_normalizer<matrix<double>> input_normalizer;
-        input_normalizer.train(train_inputs);
-        for (auto& x : train_inputs) x = input_normalizer(x);
-        for (auto& x : test_inputs) x = input_normalizer(x);
-
-        vector_normalizer<matrix<float>> output_normalizer;
-        output_normalizer.train(train_outputs);
-        auto output_means = output_normalizer.means();
-        auto output_stds = output_normalizer.std_devs();
-        for (auto& x : train_outputs) x = output_normalizer(x);
-        for (auto& x : test_outputs) x = output_normalizer(x);
-
-        // 5. Initialize network and trainer
-        net_type net;
-        dnn_trainer<net_type, adam> trainer(net);
-
-        trainer.set_learning_rate(0.001);
-        trainer.set_min_learning_rate(1e-6);
-        trainer.set_mini_batch_size(128);
-        trainer.set_iterations_without_progress_threshold(100);
-        trainer.be_verbose();
-
-        // 6. Training process
-        cout << "Starting training..." << endl;
-        trainer.train(train_inputs, train_outputs);
-
-        // 7. Denormalization function
-        auto denormalize = [&](matrix<float>& x) {
-            for (long c = 0; c < x.nc(); ++c) {
-                x(0,c) = x(0,c)*output_stds(c) + output_means(c);
-            }
-        };
-
-        // 8. Training set evaluation
-        double train_mse = 0;
-        auto predictions = net(train_inputs);
-        for (size_t i = 0; i < train_inputs.size(); ++i) {
-            denormalize(predictions[i]);
-            denormalize(train_outputs[i]);
-            train_mse += length_squared(predictions[i] - train_outputs[i]);
-        }
-        train_mse /= train_inputs.size();
-
-        // 9. Test set evaluation
-        double test_mse = 0;
-        auto test_predictions = net(test_inputs);
-        for (size_t i = 0; i < test_inputs.size(); ++i) {
-            denormalize(test_predictions[i]);
-            denormalize(test_outputs[i]);
-            test_mse += length_squared(test_predictions[i] - test_outputs[i]);
-        }
-        test_mse /= test_inputs.size();
-
-        // 10. Display results
-        cout << "\nFinal Results:" << endl
-             << "Training MSE: " << train_mse << endl
-             << "Test MSE:     " << test_mse << endl;
-
-        // 11. Prediction samples
-        cout << "\nSample Predictions:" << endl;
-        for (size_t i = 0; i < 5; ++i) {
-            auto in = test_inputs[i];
-            auto true_out = test_outputs[i];
-            auto pred_out = net(in);
-
-            denormalize(true_out);
-            denormalize(pred_out);
-
-            cout << "Input: [" << in(0,0) << ", " << in(1,0) << "]\n"
-                 << "True:  [" << true_out(0,0) << ", " << true_out(1,0) << "]\n"
-                 << "Pred:  [" << pred_out(0,0) << ", " << pred_out(1,0) << "]\n"
-                 << "Error: [" << pred_out(0,0)-true_out(0,0) 
-                 << ", " << pred_out(1,0)-true_out(1,0) << "]\n\n";
-        }
+  // ========================== Evaluations ==========================
+  // Test the pixels from [0, 0] to [255, 255]
+  std::vector<dlib::matrix<double>> test_input;
+  for (int i = 0; i < 256; i++) {
+    for (int j = 0; j < 256; j++) {
+      dlib::matrix<double> input(2, 1);
+      input(0, 0) = j;
+      input(1, 0) = i;
+      test_input.push_back(input);
     }
-    catch(std::exception& e) {
-        cout << "Error: " << e.what() << endl;
+  }
+  for (auto& x : test_input) x = input_normalizer(x);
+  std::vector<dlib::matrix<float>> test_output = net(test_input);
+  for (auto& x : test_output) {
+    x(0, 0) = x(0, 0) / output_stds(0, 0) + output_means(0, 0);
+    x(1, 0) = x(1, 0) / output_stds(1, 0) + output_means(1, 0);
+  }
+  // Create file and save the output to "data/test_output.txt"
+  std::ofstream output_file("../data/test_output.txt");
+  if (!output_file.is_open()) {
+    std::cerr << "Error: Could not open file " << "../data/test_output.txt" << std::endl;
+    return 1;
+  }
+  for (int i = 0; i < 256; i++) {
+    for (int j = 0; j < 256; j++) {
+      output_file << j << " " << i << " " << test_output[i * 256 + j](0, 0) << " " << test_output[i * 256 + j](1, 0) << std::endl;
     }
+  }
+  // Compare the predicted dst_point and ground truth for training data
+  // Print: The point (x, y) \t should be mapped to (x', y'), \t fitting result: (x'', y'')
+  for (int i = 0; i < src_vec.size(); i++) {
+    dlib::matrix<float> dst_point = net(src_vec[i]);
+    dst_point(0, 0) = dst_point(0, 0) / output_stds(0, 0) + output_means(0, 0);
+    dst_point(1, 0) = dst_point(1, 0) / output_stds(1, 0) + output_means(1, 0);
+    std::cout << "The point (" << src_vec_input[i](0, 0) << ", " << src_vec_input[i](1, 0) 
+      << ") \t should be mapped to (" << dst_vec_input[i](0, 0) << ", " << dst_vec_input[i](1, 0) 
+      << "), \t fitting result: (" << dst_point(0, 0) << ", " << dst_point(1, 0) << ")" 
+      << std::endl;
+  }
 }
