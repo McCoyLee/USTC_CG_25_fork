@@ -1,4 +1,5 @@
 #include "target_image_widget.h"
+#include "seamless_clone.h"
 
 #include <cmath>
 
@@ -117,15 +118,36 @@ void TargetImageWidget::clone()
             }
             break;
         }
-        case USTC_CG::TargetImageWidget::kSeamless:
+        case USTC_CG::TargetImageWidget::kSeamless: 
         {
-            // HW3_TODO: You should implement your own seamless cloning. For
-            // each pixel in the selected region, calculate the final RGB color
-            // by solving Poisson Equations.
-            restore();
-
+            if (source_image_ && source_image_->get_data() && data_) 
+            {
+                // ===== 移除错误的前置清除操作 =====
+                // 直接恢复目标图像至原始状态
+                *data_ = *back_up_;
+                
+                auto seamless_mask = source_image_->get_region_mask();
+                auto source_pos = source_image_->get_position();
+                int offset_x = static_cast<int>(mouse_position_.x) - 
+                               static_cast<int>(source_pos.x);
+                int offset_y = static_cast<int>(mouse_position_.y) - 
+                               static_cast<int>(source_pos.y);
+                
+                // 使用备份图像作为目标基准
+                SeamlessClone seamless(
+                    source_image_->get_data(), 
+                    back_up_,  // <- 使用原始目标图像
+                    seamless_mask, 
+                    offset_x, 
+                    offset_y
+                );
+                auto result = seamless.solve(flag_realtime_updating);
+                
+                // 应用克隆结果
+                *data_ = *result;
+            }
             break;
-        }
+        }       
         default: break;
     }
 
