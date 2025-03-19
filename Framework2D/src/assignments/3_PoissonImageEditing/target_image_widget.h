@@ -14,7 +14,8 @@ class TargetImageWidget : public ImageWidget
     {
         kDefault = 0,
         kPaste = 1,
-        kSeamless = 2
+        kSeamless = 2,
+        kMixedGradient = 3
     };
 
     explicit TargetImageWidget(
@@ -37,6 +38,8 @@ class TargetImageWidget : public ImageWidget
     // The clone function
     void clone();
 
+    void set_mixed_gradient();
+    
    private:
     // Event handlers for mouse interactions.
     void mouse_click_event();

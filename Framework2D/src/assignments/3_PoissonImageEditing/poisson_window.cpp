@@ -102,6 +102,10 @@ void PoissonWindow::draw_toolbar()
             "Press this button and then click in the target image, to "
             "perform SEAMLESS cloning of the selected region.");
 
+        if(ImGui::MenuItem("Mixed Gradient") && p_target_ && p_source_)
+        {
+            p_target_->set_mixed_gradient();
+        }
         ImGui::EndMainMenuBar();
     }
     

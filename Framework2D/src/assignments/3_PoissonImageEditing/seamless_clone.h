@@ -12,7 +12,8 @@ class SeamlessClone
             std::shared_ptr<USTC_CG::Image> src,
             std::shared_ptr<USTC_CG::Image> tar,
             std::shared_ptr<USTC_CG::Image> mask,
-            int offset_x, int offset_y);
+            int offset_x, int offset_y,
+            bool use_mixed_gradient = false);
     std::shared_ptr<USTC_CG::Image> solve(bool realtime = false);    
 
     private:
@@ -20,6 +21,7 @@ class SeamlessClone
             std::shared_ptr<USTC_CG::Image> tar_img_;
             std::shared_ptr<USTC_CG::Image> mask_;
             int offset_x_, offset_y_;
+            bool use_mixed_gradient_;
     
     struct ChannelData {
         Eigen::SparseMatrix<double> A;
@@ -34,4 +36,6 @@ class SeamlessClone
     void buildSystem();
     void buildAMatrix(int c);
     void buildBVector(int c, Eigen::VectorXd& B);
+
+    bool system_needs_rebuild_ = true;
 };
