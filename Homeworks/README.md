@@ -51,4 +51,4 @@
 2. ImageWarping 图像变形 [->](./2_image_warping/)
 3. PoissonImageEditing 图像融合 [->](./3_poisson_image_editing/)
 4. TutteParameterzation 曲面参数�? [->](./4_tutte_parametrzation/)
->>>>>>> upstream
+5. ArapParametrzation & LaplacianSurfaceEditing ARAP参数�? & Laplace表面编辑 [->](./5_arap_parametrzation&_laplace_surface_editing/)
