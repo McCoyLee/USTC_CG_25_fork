@@ -20,6 +20,22 @@ foreach (dir IN LISTS dirs)
     endforeach ()
 endforeach ()
 
+
+foreach (dir IN LISTS dirs)
+    if (NOT EXISTS ${dir}/nodes_render)
+        message(STATUS "[NO RENDER NODES IN] " ${dir} )
+        continue()
+    endif()
+    message(STATUS "[Add directory RENDER] " ${dir})
+    get_property(current_targets DIRECTORY ${dir}/nodes_render PROPERTY BUILDSYSTEM_TARGETS)
+    message(STATUS "[Sub targets RENDER] " ${current_targets})
+    foreach (tgt IN LISTS current_targets)
+        message(STATUS "[Pushback target RENDER]  " ${tgt})
+        list(APPEND inner_targets ${tgt})
+    endforeach ()
+endforeach ()
+
+
 message(STATUS "[All sub targets] " ${inner_targets})
 
 get_filename_component(submission_name ${CMAKE_CURRENT_SOURCE_DIR} NAME)
@@ -29,4 +45,5 @@ add_custom_target(${submission_name}_nodes
         COMMENT "Building submissions..."
 )
 add_dependencies(${submission_name}_nodes ${inner_targets})
+
 
