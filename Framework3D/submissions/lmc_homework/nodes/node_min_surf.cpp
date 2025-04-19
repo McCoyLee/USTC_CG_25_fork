@@ -5,11 +5,44 @@
 #include <time.h>
 #include <Eigen/Sparse>
 
+    /*
+    ** @brief HW4_TutteParameterization
+    **
+    ** This file presents the basic framework of a "node", which processes inputs
+    ** received from the left and outputs specific variables for downstream nodes to
+    ** use.
+    ** - In the first function, node_declare, you can set up the node's input and
+    ** output variables.
+    ** - The second function, node_exec is the execution part of the node, where we
+    ** need to implement the node's functionality.
+    ** Your task is to fill in the required logic at the specified locations
+    ** within this template, especially in node_exec.
+    */
+
 NODE_DEF_OPEN_SCOPE
 NODE_DECLARATION_FUNCTION(min_surf)
 {
+    // Input-1: Original 3D mesh with boundary
     b.add_input<Geometry>("Input");
 
+    /*
+    ** NOTE: You can add more inputs or outputs if necessary. For example, in
+    *some cases,
+    ** additional information (e.g. other mesh geometry, other parameters) is
+    *required to perform
+    ** the computation.
+    **
+    ** Be sure that the input/outputs do not share the same name. You can add
+    *one geometry as
+    **
+    **                b.add_input<Geometry>("Input");
+    **
+    ** Or maybe you need a value buffer like:
+    **
+    **                b.add_input<float1Buffer>("Weights");
+    */
+
+    // Output-1: Minimal surface with fixed boundary
     b.add_output<Geometry>("Output");
 }
 
@@ -24,94 +57,57 @@ NODE_EXECUTION_FUNCTION(min_surf)
         return false;
     }
 
+    /* ----------------------------- Preprocess -------------------------------
+    ** Create a halfedge structure (using OpenMesh) for the input mesh. The
+    ** half-edge data structure is a widely used data structure in geometric
+    ** processing, offering convenient operations for traversing and modifying
+    ** mesh elements.
+    */
     auto halfedge_mesh = operand_to_openmesh(&input);
 
-    std::vector<OpenMesh::VertexHandle> internal_vts, boundary_vts;
-    for (auto vh : halfedge_mesh->vertices()) {
-        if (halfedge_mesh->is_boundary(vh)) {
-            boundary_vts.push_back(vh);
-        }
-        else {
-            internal_vts.push_back(vh);
-        }
-    }
+    /* ---------------- [HW4_TODO] TASK 1: Minimal Surface --------------------
+    ** In this task, you are required to generate a 'minimal surface' mesh with
+    ** the boundary of the input mesh as its boundary.
+    **
+    ** Specifically, the positions of the boundary vertices of the input mesh
+    ** should be fixed. By solving a global Laplace equation on the mesh,
+    ** recalculate the coordinates of the vertices inside the mesh to achieve
+    ** the minimal surface configuration.
+    **
+    ** (Recall the Poisson equation with Dirichlet Boundary Condition in HW3)
+    */
 
-    if (internal_vts.empty()) {
-        auto geometry = openmesh_to_operand(halfedge_mesh.get());
-        params.set_output("Output", std::move(*geometry));
-        return true;
-    }
+    /*
+    ** Algorithm Pseudocode for Minimal Surface Calculation
+    ** ------------------------------------------------------------------------
+    ** 1. Initialize mesh with input boundary conditions.
+    **    - For each boundary vertex, fix its position.
+    **    - For internal vertices, initialize with initial guess if necessary.
+    **
+    ** 2. Construct Laplacian matrix for the mesh.
+    **    - Compute weights for each edge based on the chosen weighting scheme
+    **      (e.g., uniform weights for simplicity).
+    **    - Assemble the global Laplacian matrix.
+    **
+    ** 3. Solve the Laplace equation for interior vertices.
+    **    - Apply Dirichlet boundary conditions for boundary vertices.
+    **    - Solve the linear system (Laplacian * X = 0) to find new positions
+    **      for internal vertices.
+    **
+    ** 4. Update mesh geometry with new vertex positions.
+    **    - Ensure the mesh respects the minimal surface configuration.
+    **
+    ** Note: This pseudocode outlines the general steps for calculating a
+    ** minimal surface mesh given fixed boundary conditions using the Laplace
+    ** equation. The specific implementation details may vary based on the mesh
+    ** representation and numerical methods used.
+    **
+    */
 
-    std::unordered_map<OpenMesh::VertexHandle, int> vh_to_index;
-    for (int i = 0; i < internal_vts.size(); ++i) {
-        vh_to_index[internal_vts[i]] = i;
-    }
-
-    // Construct the Laplacian matrix
-    std::vector<Eigen::Triplet<double>> tripletList;
-    Eigen::VectorXd b_x(internal_vts.size()), b_y(internal_vts.size()),
-        b_z(internal_vts.size());
-    b_x.setZero();
-    b_y.setZero();
-    b_z.setZero();
-
-    for (int i = 0; i < internal_vts.size(); ++i) {
-        OpenMesh::VertexHandle vh_i = internal_vts[i];
-        int degree = 0;
-        double sum_x = 0.0;
-        double sum_y = 0.0;
-        double sum_z = 0.0;
-
-        for (auto vv_it = halfedge_mesh->vv_begin(vh_i); vv_it.is_valid();
-             ++vv_it) {
-            OpenMesh::VertexHandle vh_j = *vv_it;
-
-        if (halfedge_mesh->is_boundary(vh_j)) {
-            auto pt = halfedge_mesh->point(vh_j);
-            sum_x += pt[0];
-            sum_y += pt[1];
-            sum_z += pt[2];
-        }
-        else {
-            auto it = vh_to_index.find(vh_j);
-            if (it != vh_to_index.end()) {
-                tripletList.emplace_back(i, it->second, -1.0);
-            }
-        }
-        degree++;
-    }
-
-    tripletList.emplace_back(i, i, degree);
-
-    b_x(i) = sum_x;
-    b_y(i) = sum_y;
-    b_z(i) = sum_z;
-}
-
-// Coustruct a sparse matrix
-Eigen::SparseMatrix<double> L(internal_vts.size(), internal_vts.size());
-L.setFromTriplets(tripletList.begin(), tripletList.end());
-
-// Solve the linear system
-Eigen::SparseLU<Eigen::SparseMatrix<double>> solver;
-solver.compute(L);
-if (solver.info() != Eigen::Success) {
-    throw std::runtime_error("Linear system solving failed");
-}
-
-Eigen::VectorXd x_coords = solver.solve(b_x);
-Eigen::VectorXd y_coords = solver.solve(b_y);
-Eigen::VectorXd z_coords = solver.solve(b_z);
-if (solver.info() != Eigen::Success) {
-    throw std::runtime_error("Linear system solving failed");
-}
-
-// Update the vertex positions
-for (int i = 0; i < internal_vts.size(); ++i) {
-    OpenMesh::VertexHandle vh = internal_vts[i];
-    halfedge_mesh->set_point(vh, { x_coords[i], y_coords[i], z_coords[i] });
-}
-
+    /* ----------------------------- Postprocess ------------------------------
+    ** Convert the minimal surface mesh from the halfedge structure back to
+    ** Geometry format as the node's output.
+    */
     auto geometry = openmesh_to_operand(halfedge_mesh.get());
 
     // Set the output of the nodes

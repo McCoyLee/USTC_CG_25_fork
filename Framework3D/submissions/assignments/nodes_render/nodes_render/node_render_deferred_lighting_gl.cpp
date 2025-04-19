@@ -114,7 +114,7 @@ NODE_EXECUTION_FUNCTION(deferred_lighting)
     std::vector<LightInfo> light_vector;
 
     for (int i = 0; i < lights.size(); ++i) {
-        if (!lights[i]->GetId().IsEmpty() && lights[i]->GetLightType() == HdPrimTypeTokens->sphereLight) {
+        if (!lights[i]->GetId().IsEmpty()&& lights[i]->GetLightType() ==  HdPrimTypeTokens->sphereLight) {
             GlfSimpleLight light_params =
                 lights[i]->Get(HdTokens->params).Get<GlfSimpleLight>();
             auto diffuse4 = light_params.GetDiffuse();
