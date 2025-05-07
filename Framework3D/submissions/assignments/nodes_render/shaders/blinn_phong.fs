@@ -2,7 +2,7 @@
 
 // Define a uniform struct for lights
 struct Light {
-    // The matrices are used for shadow mapping. You need to fill it according to how we are filling it when building the normal maps (node_render_shadow_mapping.cpp). 
+    // The matrices are used for shadow mapping. You need to fill it according to how we are filling it when building the normal maps (node_render_shadow_mapping.cpp).
     // Now, they are filled with identity matrix. You need to modify C++ code innode_render_deferred_lighting.cpp.
     // Position and color are filled.
     mat4 light_projection;
@@ -41,21 +41,41 @@ vec3 normal = texture2D(normalMapSampler,uv).xyz;
 vec4 metalnessRoughness = texture2D(metallicRoughnessSampler,uv);
 float metal = metalnessRoughness.x;
 float roughness = metalnessRoughness.y;
+
+vec3 diffuse_color = texture2D(diffuseColorSampler, uv).xyz;
+
+const vec3 ambient_light = vec3(0.1, 0.1, 0.1);
+
 Color = vec4(0,0,0,1);
 for(int i = 0; i < light_count; i ++) {
 
-float shadow_map_value = texture(shadow_maps, vec3(uv, lights[i].shadow_map_id)).x;
+vec3 this_color = vec3(0,0,0);
 
-// Visualization of shadow map
-Color += vec4(shadow_map_value, 0, 0, 1);
+float alpha = 1.0f / (roughness * roughness + 0.0001);
+vec3 pos_light = lights[i].position;
+vec3 color_light = lights[i].color;
+vec3 dir2light = normalize(pos_light - pos);
+float dist_light_surf = length(pos_light - pos);
+vec3 dir2eye = normalize(camPos - pos);
+vec3 hvec = normalize(dir2light + dir2eye);
+color_light /= 4 * 3.1415926 * dist_light_surf * dist_light_surf;
 
-// HW6_TODO: first comment the line above ("Color +=..."). That's for quick Visualization.
-// You should first do the Blinn Phong shading here. You can use roughness to modify alpha. Or you can pass in an alpha value through the uniform above.
+vec3 diffuse_term = color_light * max(0, dot(normal, dir2light));
+diffuse_term = diffuse_term * diffuse_color * (1.0-roughness);
+vec3 spec_term = pow(max(dot(normal, hvec), 0.0), alpha)* diffuse_color *roughness *color_light;
+this_color = spec_term + diffuse_term;
 
-// After finishing Blinn Phong shading, you can do shadow mapping with the help of the provided shadow_map_value. You will need to refer to the node, node_render_shadow_mapping.cpp, for the light matrices definition. Then you need to fill the mat4 light_projection; mat4 light_view; with similar approach that we fill position and color.
-// For shadow mapping, as is discussed in the course, you should compare the value "position depth from the light's view" against the "blocking object's depth.", then you can decide whether it's shadowed.
+vec4 homopos = vec4(pos, 1.0);
+vec4 homo_lightspace_pos = lights[i].light_projection * lights[i].light_view * homopos;
+homo_lightspace_pos /=homo_lightspace_pos.w;
+float depth_light_space = homo_lightspace_pos.z - 0.01;
+float shadow_scale = 0;
+float shadow_map_value = texture(shadow_maps, vec3(homo_lightspace_pos.xy*0.5 + 0.5, lights[i].shadow_map_id)).x;
+if(shadow_map_value > depth_light_space) shadow_scale = 1;
 
-// PCSS is also applied here.
+this_color *= shadow_scale;
+Color += vec4(this_color,1);
+
 }
-
+Color += vec4(diffuse_color*ambient_light, 1);
 }

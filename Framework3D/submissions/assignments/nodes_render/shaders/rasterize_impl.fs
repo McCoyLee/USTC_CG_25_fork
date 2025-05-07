@@ -32,8 +32,6 @@ void main() {
     vec3 normalmap_value = texture2D(normalMapSampler, vTexcoord).xyz;
     normal = normalize(vertexNormal);
 
-    // HW6_TODO: Apply normal map here. Use normal textures to modify vertex normals.
-
     // Calculate tangent and bitangent
     vec3 edge1 = dFdx(vertexPosition);
     vec3 edge2 = dFdy(vertexPosition);
@@ -49,4 +47,8 @@ void main() {
     }
     tangent = normalize(tangent - dot(tangent, normal) * normal);
     vec3 bitangent = normalize(cross(tangent,normal));
+
+    normalmap_value = normalize(normalmap_value * 2 - 1);
+    mat3 tangent2world = mat3(tangent, bitangent, normal);
+    normal = tangent2world * normalmap_value;
 }

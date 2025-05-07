@@ -14,143 +14,87 @@ NODE_DECLARATION_FUNCTION(shadow_mapping)
 {
     b.add_input<int>("resolution").default_val(1024).min(256).max(4096);
     b.add_input<std::string>("Shader").default_val("shaders/shadow_mapping.fs");
-
     b.add_output<TextureHandle>("Shadow Maps");
 }
 
 NODE_EXECUTION_FUNCTION(shadow_mapping)
 {
-    auto resolution = params.get_input<int>("resolution");
+    int resolution = params.get_input<int>("resolution");
+    std::string shaderPath = params.get_input<std::string>("Shader");
 
-    TextureDesc texture_desc;
-    texture_desc.array_size = lights.size();
-    // texture_desc.array_size = 1;
-    texture_desc.size = GfVec2i(resolution);
-    texture_desc.format = HdFormatUNorm8Vec4;
-    auto shadow_map_texture = resource_allocator.create(texture_desc);
+    TextureDesc desc;
+    desc.array_size = static_cast<int>(lights.size());
+    desc.size       = GfVec2i(resolution);
+    desc.format     = HdFormatFloat32;
+    auto shadowTex  = resource_allocator.create(desc);
 
-    auto shaderPath = params.get_input<std::string>("Shader");
+    GLuint fbo;
+    glGenFramebuffers(1, &fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    glViewport(0, 0, resolution, resolution);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
 
-    ShaderDesc shader_desc;
-    shader_desc.set_vertex_path(
-        std::filesystem::path(RENDER_NODES_FILES_DIR) /
-        std::filesystem::path("shaders/shadow_mapping.vs"));
-
-    shader_desc.set_fragment_path(
-        std::filesystem::path(RENDER_NODES_FILES_DIR) /
-        std::filesystem::path(shaderPath));
-    auto shader_handle = resource_allocator.create(shader_desc);
+    ShaderDesc sd;
+    sd.set_vertex_path(
+        std::filesystem::path(RENDER_NODES_FILES_DIR)/"shaders/shadow_mapping.vs");
+    sd.set_fragment_path(
+        std::filesystem::path(RENDER_NODES_FILES_DIR)/shaderPath);
+    auto shader = resource_allocator.create(sd);
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
 
-    std::vector<TextureHandle> depth_textures;
-    GLuint framebuffer;
-    glGenFramebuffers(1, &framebuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+    // Helper: 手写 LookAt 替代 GfMatrix4d::LookAt
+    auto MakeLookAt = [](const GfVec3f &eye,
+                         const GfVec3f &center,
+                         const GfVec3f &up) {
+        GfVec3f f = center - eye; f.Normalize();
+        GfVec3f s = GfCross(f, up);    s.Normalize();
+        GfVec3f u = GfCross(s, f);
+        float tx = -GfDot(s, eye);
+        float ty = -GfDot(u, eye);
+        float tz =  GfDot(f, eye);
+        return GfMatrix4f(
+            s[0],  s[1],  s[2],  tx,
+            u[0],  u[1],  u[2],  ty,
+           -f[0], -f[1], -f[2],  tz,
+            0,     0,     0,     1
+        );
+    };
 
-    glViewport(0, 0, resolution, resolution);
-    int NN = lights.size();
-    auto tmp = global_payload;
-    for (int light_id = 0; light_id < NN; ++light_id) {
-        shader_handle->shader.use();
-        if (!lights[light_id]->GetId().IsEmpty()) {
-            GlfSimpleLight light_params =
-                lights[light_id]->Get(HdTokens->params).Get<GlfSimpleLight>();
+    for (int i = 0; i < (int)lights.size(); ++i) {
+        if (lights[i]->GetLightType() != HdPrimTypeTokens->sphereLight) continue;
+        GlfSimpleLight lp = lights[i]->Get(HdTokens->params).Get<GlfSimpleLight>();
+        GfVec3f pos(lp.GetPosition()[0],lp.GetPosition()[1],lp.GetPosition()[2]);
+        float rad = lights[i]->Get(HdLightTokens->radius).Get<float>();
 
-            // HW6: The matrices for lights information is here! Current value
-            // is set that "it just works". However, you should try to modify
-            // the values to see how it affects the performance of the shadow
-            // maps.
+        GfMatrix4f view = MakeLookAt(pos, GfVec3f(0.0f), GfVec3f(0,1,0));
+        GfFrustum fr; fr.SetPerspective(90.0f,1.0f,0.1f,rad);
+        GfMatrix4f proj = GfMatrix4f(fr.ComputeProjectionMatrix());
 
-            GfMatrix4f light_view_mat;
-            GfMatrix4f light_projection_mat;
+        shader->shader.use();
+        shader->shader.setMat4("light_view", view);
+        shader->shader.setMat4("light_projection", proj);
 
-            bool has_light = false;
-            if (lights[light_id]->GetLightType() ==
-                HdPrimTypeTokens->sphereLight) {
+        glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                                  shadowTex->texture_id, 0, i);
+        glClear(GL_DEPTH_BUFFER_BIT);
 
-                GfFrustum frustum;
-                GfVec3f light_position = { light_params.GetPosition()[0],
-                                           light_params.GetPosition()[1],
-                                           light_params.GetPosition()[2] };
-
-                light_view_mat = GfMatrix4f().SetLookAt(
-                    light_position, GfVec3f(0, 0, 0), GfVec3f(0, 0, 1));
-                frustum.SetPerspective(120.f, 1.0, 1, 25.f);
-                light_projection_mat =
-                    GfMatrix4f(frustum.ComputeProjectionMatrix());
-
-                has_light = true;
-            }
-
-            if (!has_light) {
-                continue;
-            }
-
-            shader_handle->shader.setMat4("light_view", light_view_mat);
-            shader_handle->shader.setMat4(
-                "light_projection", GfMatrix4f(light_projection_mat));
-
-            glFramebufferTextureLayer(
-                GL_FRAMEBUFFER,
-                GL_COLOR_ATTACHMENT0,
-                shadow_map_texture->texture_id,
-                0,
-                light_id);
-
-            texture_desc.format = HdFormatFloat32UInt8;
-            texture_desc.array_size = 1;
-            auto depth_texture_for_opengl =
-                resource_allocator.create(texture_desc);
-            depth_textures.push_back(depth_texture_for_opengl);
-
-            glFramebufferTexture2D(
-                GL_FRAMEBUFFER,
-                GL_DEPTH_STENCIL_ATTACHMENT,
-                GL_TEXTURE_2D,
-                depth_texture_for_opengl->texture_id,
-                0);
-
-            glClearColor(0.f, 0.f, 0.f, 1.0f);
-            glClear(
-                GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT |
-                GL_STENCIL_BUFFER_BIT);
-
-            for (int mesh_id = 0; mesh_id < meshes.size(); ++mesh_id) {
-                auto mesh = meshes[mesh_id];
-
-                shader_handle->shader.setMat4("model", mesh->transform);
-
-                mesh->RefreshGLBuffer();
-
-                glBindVertexArray(mesh->VAO);
-                glDrawElements(
-                    GL_TRIANGLES,
-                    static_cast<unsigned int>(
-                        mesh->triangulatedIndices.size() * 3),
-                    GL_UNSIGNED_INT,
-                    0);
-                glBindVertexArray(0);
-            }
+        for (auto mesh : meshes) {
+            shader->shader.setMat4("model", mesh->transform);
+            mesh->RefreshGLBuffer();
+            glBindVertexArray(mesh->VAO);
+            glDrawElements(GL_TRIANGLES,
+                           (GLsizei)(mesh->triangulatedIndices.size()*3),
+                           GL_UNSIGNED_INT, nullptr);
         }
     }
 
-    for (auto&& depth_texture : depth_textures) {
-        resource_allocator.destroy(depth_texture);
-    }
-
-    resource_allocator.destroy(shader_handle);
-    glDeleteFramebuffers(1, &framebuffer);
-
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    auto shader_error = shader_handle->shader.get_error();
-
-    params.set_output("Shadow Maps", shadow_map_texture);
-    if (!shader_error.empty()) {
-        throw std::runtime_error(shader_error);
-    }
+    glDeleteFramebuffers(1, &fbo);
+    resource_allocator.destroy(shader);
+    params.set_output("Shadow Maps", shadowTex);
 }
 
 NODE_DECLARATION_UI(shadow_mapping);
