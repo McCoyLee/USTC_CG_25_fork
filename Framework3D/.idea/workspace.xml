@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="6625f6e8-8848-4eec-9e34-b51f143af666" name="更改" comment="">
+      <change afterPath="$PROJECT_DIR$/Framework3D/source/Plugins/hd_USTC_CG_Embree/surfaceInteraction.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/submissions/assignments/nodes/node_sample_particles_in_box.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/submissions/assignments/nodes/node_sph_fluid.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/submissions/assignments/utils/sph_fluid/colormap_jet.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/submissions/assignments/utils/sph_fluid/iisph.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/submissions/assignments/utils/sph_fluid/iisph.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/submissions/assignments/utils/sph_fluid/particle_system.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/submissions/assignments/utils/sph_fluid/particle_system.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/submissions/assignments/utils/sph_fluid/sph_base.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/submissions/assignments/utils/sph_fluid/sph_base.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/submissions/assignments/utils/sph_fluid/utils.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/submissions/assignments/utils/sph_fluid/wcsph.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/submissions/assignments/utils/sph_fluid/wcsph.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Homeworks/9_sph_fluid/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Homeworks/9_sph_fluid/documents/README-part2.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Homeworks/9_sph_fluid/documents/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Homeworks/9_sph_fluid/images/avatar2-3.gif" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Homeworks/9_sph_fluid/images/avatar2.gif" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Homeworks/9_sph_fluid/images/boundary.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Homeworks/9_sph_fluid/images/div_v.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Homeworks/9_sph_fluid/images/grid.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Homeworks/9_sph_fluid/images/iisph-alg.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Homeworks/9_sph_fluid/images/iisph-teaser.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Homeworks/9_sph_fluid/images/material_derivative.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Homeworks/9_sph_fluid/images/node1.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Homeworks/9_sph_fluid/images/node2.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Homeworks/9_sph_fluid/images/render.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Homeworks/9_sph_fluid/images/sph.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Homeworks/9_sph_fluid/images/step.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Homeworks/9_sph_fluid/images/surface-tension.gif" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Homeworks/9_sph_fluid/images/wcsph-demo.gif" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Homeworks/9_sph_fluid/images/wcsph-reconstruct-demo.gif" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Framework3D" beforeDir="false" afterPath="$PROJECT_DIR$/Framework3D" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Framework3D/source/Plugins/hd_USTC_CG_Embree/embree4/kernels/bvh/node_intersector1.h" beforeDir="false" afterPath="$PROJECT_DIR$/Framework3D/source/Plugins/hd_USTC_CG_Embree/embree4/kernels/bvh/node_intersector1.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Framework3D/source/Plugins/hd_USTC_CG_Embree/integrator.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Framework3D/source/Plugins/hd_USTC_CG_Embree/integrator.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Framework3D/source/Plugins/hd_USTC_CG_Embree/integrator.h" beforeDir="false" afterPath="$PROJECT_DIR$/Framework3D/source/Plugins/hd_USTC_CG_Embree/integrator.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Framework3D/source/Plugins/hd_USTC_CG_Embree/integrators/path.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Framework3D/source/Plugins/hd_USTC_CG_Embree/integrators/path.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Framework3D/source/Plugins/hd_USTC_CG_Embree/integrators/path.h" beforeDir="false" afterPath="$PROJECT_DIR$/Framework3D/source/Plugins/hd_USTC_CG_Embree/integrators/path.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Framework3D/source/Plugins/hd_USTC_CG_Embree/light.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Framework3D/source/Plugins/hd_USTC_CG_Embree/light.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Framework3D/source/Plugins/hd_USTC_CG_Embree/renderer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Framework3D/source/Plugins/hd_USTC_CG_Embree/renderer.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Framework3D/source/Plugins/hd_USTC_CG_Embree/surfaceInteraction.h" beforeDir="false" afterPath="$PROJECT_DIR$/Framework3D/source/Plugins/hd_USTC_CG_Embree/surfaceInteraction.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Framework3D/submissions_inner/assignments_inner/nodes_render/shaders/blinn_phong.fs" beforeDir="false" afterPath="$PROJECT_DIR$/Framework3D/submissions_inner/assignments_inner/nodes_render/shaders/blinn_phong.fs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/submissions/assignments/utils/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/submissions/assignments/utils/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Homeworks/8_mass_spring/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/../Homeworks/8_mass_spring/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Homeworks/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/../Homeworks/README.md" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 8
+}]]></component>
+  <component name="ProjectId" id="2wxH0zl9tcqzcSLR9Y0fh2UDOnR" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.RadMigrateCodeStyle": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "git-widget-placeholder": "正在合并 main",
+    "last_opened_file_path": "C:/Users/20855/Desktop/CG/USTC_CG_25_fork/Framework3D",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="默认任务">
+      <changelist id="6625f6e8-8848-4eec-9e34-b51f143af666" name="更改" comment="" />
+      <created>1746976085414</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1746976085414</updated>
+      <workItem from="1746976086672" duration="45000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>
